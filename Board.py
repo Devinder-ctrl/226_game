@@ -1,5 +1,5 @@
 import random
-
+from Player import Player
 
 class board:
 
@@ -17,21 +17,17 @@ class board:
         self.board = self.createBoard()
 
 #string reperesentatiion of the class
-    def __str__(self):
-        boardArray =  [['_' for i in range(self.n)]for i in range(self.n)]
-
-        return boardArray
+    # def __str__(self):
+    #     boardArray =  [['_' for i in range(self.n)]for i in range(self.n)]
+    #     return boardArray
 
 #create a board
     def createBoard(self):
-        try:
-            boardArray = [['_' for i in range(self.n)]for i in range(self.n)]
+        if self.n < 2:
+            raise ValueError("n must be greater than 2")
 
-            if self.n < 0:
-                raise ValueError("Need a positive Integer")
-        except ValueError as details:
-            print(str(details))
         else:
+            boardArray = [['_' for i in range(self.n)] for i in range(self.n)]
             return boardArray
 
 
@@ -104,21 +100,27 @@ class board:
         """
         count = 0
         treasure = self.t
-        while (count < self.t):
-            # get x and y for treasure like x = (0,9) and y = (0,9)  if n = 10
-            x = random.randint(0, self.n - 1)
-            y = random.randint(0, self.n - 1)
+        try:
+            if self.t <= 0 or self.t > self.n:
+                raise ValueError("treasure must be between n and 0")
+            else:
+                while (count < self.t):
+                    # get x and y for treasure like x = (0,9) and y = (0,9)  if n = 10
+                    x = random.randint(0, self.n - 1)
+                    y = random.randint(0, self.n - 1)
 
-            #random(0,1) == (0,y)
-            if random.randint(0,1) == 0:
-                if self.moveUp(treasure,x,y):
-                    treasure = treasure -1
-                    count += 1
-            else:#random(1,0) == (x,0)
-                if self.moveHorizontal(treasure,x,y):
-                    treasure = treasure -1
-                    count += 1
-
+                    #random(0,1) == (0,y)
+                    if random.randint(0,1) == 0:
+                        if self.moveUp(treasure,x,y):
+                            treasure = treasure -1
+                            count += 1
+                    else:#random(1,0) == (x,0)
+                        if self.moveHorizontal(treasure,x,y):
+                            treasure = treasure -1
+                            count += 1
+        except ValueError as details:
+            print(str(details))
+            raise
 
     def pick(self, row, column):
 
@@ -127,16 +129,14 @@ class board:
                 raise ValueError("Row and Column not in range")
             else:
                 if  self.board[row][column] != '_':
-                    val = self.board[row][column]
+                    score = self.board[row][column]
                     self.board[row][column] = '_'
-                    self.score += val
-                    return val
+                    return score
                 else:
                     return 0
 
         except ValueError as details:
             print(str(details))
+            raise
 
-    def scores(self):
-        return self.score
 
