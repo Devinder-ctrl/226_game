@@ -13,7 +13,7 @@ from time import sleep
 
 
 BUF_SIZE = 1024
-HOST = '10.21.75.55'
+HOST = '127.0.0.1'
 PORT = 12345
 
 first_run = True
