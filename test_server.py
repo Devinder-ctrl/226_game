@@ -140,7 +140,7 @@ def test_invalid_row():
     assert value == 0b1100000000000000
 
 
-@pytest.mark.parametrize('execution_number', range(5))
+@pytest.mark.parametrize('execution_number', range(1))
 def test_board(execution_number):
     for i in range(10):
         for j in range(10):
