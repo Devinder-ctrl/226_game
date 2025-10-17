@@ -4,5 +4,4 @@ RUN mkdir /server
 
 COPY *.py /server/
 
-CMD [ "python3.12", "main.py" ]
-
+CMD [ "python3.12", "/server/main.py" ]
