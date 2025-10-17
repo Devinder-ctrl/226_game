@@ -6,7 +6,7 @@ from sys import argv
 
 
 BUF_SIZE = 1024
-HOST = '10.21.75.55'  #listen on all network interfaces not just localhost
+HOST = ''  #listen on all network interfaces not just localhost
 PORT = 12345
 
 #get the board size and number of treasures
