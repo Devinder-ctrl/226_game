@@ -119,7 +119,7 @@ class board:
         try:
             #validate treasure's range
             if self.t <= 0 or self.t > self.n:
-                raise ValueError("Treasure must be between n and 0")
+                raise ValueError("treasure must be between n and 0")
             else:
                 while (count < self.t):
                     # get x and y for treasure like x = (0,9) and y = (0,9)  if n = 10
