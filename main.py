@@ -1,161 +1,156 @@
-import struct
+#---------Game Server-----------#
 from socket import socket, AF_INET,SOCK_STREAM,SOL_SOCKET,SO_REUSEADDR
 from Board import board
 from Player import Player
-from sys import argv
 from threading import Thread
 from queue import Queue
+import struct
 
-BUF_SIZE = 1024
-HOST = ''
-PORT = 12345
-
-#Default board size and treasure
-board_size = 10
-treasures = 4
+BUF_SIZE = 1024  #size of data buffer
+HOST = ''        #listen on all networks
+PORT = 12345     #accept connections on this port
 
 
-input_queue = Queue()
-output_queue = Queue()
-#server socket
+#Queues for communication between threads
+input_queue = Queue() #store input data
+output_queue = Queue()#store output data
+
+
+#------Board Thread --------#
 def board_thread():
-    b = board(board_size, treasures)
-    b.treasures()
 
-    b.printboard()
+    """
+    Board thread for managing board
+    Get inputs from players , updates the board,
+    return scores and sends result back to players
+    :return: None
+    """
 
-    player1 = Player('One')
-    player2 = Player('Two')
+    #Default board size and Number of treasures
+    board_size = 10
+    treasures = 4
+    b = board(board_size, treasures) #creates a board
+    b.treasures()                    #place treasures on board
+    b.print_board()                   #prints the board
+
+    #Two player objects
+    player_one = Player('One')
+    player_two = Player('Two')
+
+    #----------main loop------------#
     while True:
+        #get row,column and client tuple from player thread
+        (client,row,column) = input_queue.get()#get user
 
-        (client, row,column) = input_queue.get()#get user
-
-
+        #----validate coordinates----#
         if row < 0 or row >= board_size or column < 0 or column >= board_size:
-                #Bits: 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0
-                # 1  1  0  0  0  0 0 0 0 0 0 0 0 0 0 0
-                #2 front bits are 1 and remaining 0
+                #send binary number to player thread for invalid input
                 t = 0b1100000000000000
-                #pack result
-                #send result
-                b.printboard()
+                #put binary number in output queue to send it to player thread
                 output_queue.put(t)
 
         else:
-            #get score and add score
-
-
+                #validate client number if its 0 or 1
                 if client == 0:
-                    score1 = b.pick(row, column)
-                    player1.add_score(score1)
-                    print("Treasure Found for Player 1 :", score1)
-                    print("First Players Score :", player1.get_score())
+                    score_one = b.pick(row, column)                        #get first players score using pick function from board
+                    player_one.add_score(score_one)                        #add scores for player one
+                    print("Treasure Found for Player 1 :", score_one)      #print its treasure and players total score
+                    print("First Players Score :", player_one.get_score())
 
-                    t1 = player1.get_score() << 7
-                    t2 = player2.get_score()
+                    #bit shift by 7 to get 9 bits for player one score
+                    t1 = player_one.get_score() << 7
+                    #left 7 bits for player 2 score
+                    t2 = player_two.get_score()
 
+                    #combine both player's score and put it in output_queue for board thread
+                    output_queue.put(t1 + t2)
+                    #print updated board
+                    b.print_board()
 
-                    output_queue.put(t1+t2)
-                    b.printboard()
-
-
+                #similar to client 0 , player pick score which gets stored in add_score function
+                #the getting its total
                 elif client == 1:
-                    score2 = b.pick(row, column)
-                    player2.add_score(score2)
+                    score_two = b.pick(row, column)                          #get second players score using pick function from board
+                    player_two.add_score(score_two)                          #add scores for player two
+                    print("Treasure Found for Player 2 :", score_two)        #print its treasure and players total score
+                    print("Second Players Score :", player_two.get_score())
 
-                    print("Treasure Found for Player 2 :", score2)
-                    print("Second Players Score :", player2.get_score())
-                    t1 = player1.get_score() << 7
-                    t2 = player2.get_score()
+                    t1 = player_one.get_score() << 7
+                    t2 = player_two.get_score()
                     output_queue.put(t1+t2)
+                    b.print_board()
 
-                    b.printboard()
+#----------Player Thread-----------#
+def player_thread(sc, client):
 
+        """
+        Player thread send and receive data from board using queues,
+        it communicates with client to receive data and inputs,
+        It has two players run back and forth depending on the client's number
 
-
-
-
-
-
-                #send score to client
-                # playersScore = One.getScore()
-                # S = playersScore.to_bytes(2,byteorder='big')
-                # ScoreByte = struct.pack('!H', S)
-                # sc.send(ScoreByte)
-
-
-
-
-
-def player_thread1(sc, client):
-
-    # handle connection
-        #send name length to client
+        :param sc: Socket object connected to client
+        :param client: Player's Client number (0 or 1)
+        :return:None
+        """
 
         if client == 0:
-
             player_name = 'One'
-            player_one = player_name.encode('utf-8')
-            length = struct.pack('!H', len(player_one))  # unpack data
-            sc.sendall(length)
-            sc.sendall(player_one)
+            player = player_name.encode('utf-8')
+            name_length = struct.pack('!H', len(player))  # unpack data
+            sc.send(name_length)
+            sc.send(player)
             while True:
-                data = sc.recv(BUF_SIZE)  # receive message with 1 byte of size
-                value = struct.unpack('!B', data)[0]  # unpack struct, get data as an unsigned char as we need only 1 byte
-                row = (value >> 4) & 0b1111  # shift to 4 bits
-                column = value & 0b1111  # remaining binary numbers goes to columns
-
-                print("Clients IP:", sc.getsockname(), data.hex(), row, column)  # get clients ip, hex,row and columns
-
-                input_queue.put((client, row, column))
-
-                t1 = output_queue.get()
-
-                result1 = struct.pack('!H', t1)
-                sc.send(result1)
+                data = sc.recv(BUF_SIZE)                  # receive Data from the socket
+                try:                                      #try-except to end game if no more treasure on board
+                    value = struct.unpack('!B', data)[0]  # unpack client input as unsigned char data (need 1 byte)
+                except:
+                    print("Game End")
+                    exit()
+                row = (value >> 4) & 0b1111           #shift the input by 4 and bitmask it to get row
+                column = value & 0b1111               #bitmask remaining number to get column
+                print("Clients IP:", sc.getsockname(), data.hex(), row, column)  # get clients ip,data hex,row and column
+                input_queue.put((client, row, column))       #put the client,row and column in input_queue to send it to board thread
+                t1 = output_queue.get()        #get player's score from board thread using output_queue
+                result_one = struct.pack('!H', t1)#then pack the result as unsigned short and send it to sock
+                sc.send(result_one)
 
         else:
             player_name = 'Two'
-            player_one = player_name.encode('utf-8')
-            length = struct.pack('!H',len(player_one)) #unpack data
-            sc.send(length)
-            sc.send(player_one)
+            player = player_name.encode('utf-8')
+            name_length = struct.pack('!H', len(player))  
+            sc.send(name_length)
+            sc.send(player)
             while True:
-                data = sc.recv(BUF_SIZE)  # receive message with 1 byte of size
-                value = struct.unpack('!B', data)[0]  # unpack struct, get data as an unsigned char as we need only 1 byte
-                row = (value >> 4) & 0b1111  # shift to 4 bits
-                column = value & 0b1111  # remaining binary numbers goes to columns
-
-                print("Clients IP:", sc.getsockname(), data.hex(), row, column)  # get clients ip, hex,row and columns
-
-                #row s and columns
+                data = sc.recv(BUF_SIZE)
+                try:
+                     value = struct.unpack('!B', data)[0]
+                except:
+                    print("Game End")
+                    exit()
+                row = (value >> 4) & 0b1111
+                column = value & 0b1111
+                print("Clients IP:", sc.getpeername(), data.hex(), row, column)
                 input_queue.put((client,row, column))
-
-                #get score
                 t2 = output_queue.get()
-                #send it to client
-                result2 = struct.pack('!H', t2)
-                sc.send(result2)
+                result_two = struct.pack('!H', t2)
+                sc.send(result_two)
 
 
 
-
-
-
+#------------server---------------#
 with socket(AF_INET, SOCK_STREAM) as sock:  # AF_INET = IPv4, SOCK_STREAM = TCP socket
     sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)  # ALLOW REUSE OF ADDRESS
     sock.bind((HOST, PORT))  # bind socket to port
-    sock.listen(2)  # listen for connection at port one
-
+    sock.listen(2)  # listen for connection on 2 ports only
     client = 0
-    Thread(target=board_thread).start()
+    Thread(target=board_thread).start() #start board thread
     while True:
-        if client < 2:
-
-            sc, _ = sock.accept()  # wait for client to connect
-            # sendClient = struct.pack('!H', client)
-            # sc.send(sendClient)
-            Thread(target=player_thread1, args=(sc,client)).start()
-            client += 1
-
+            sc, _ = sock.accept() #accept connection
+            #number of clients shoulb be less that 2 else close the socket connection to that client
+            if client < 2:
+                #start player thread by passing parameters sock and client
+                Thread(target=player_thread, args=(sc,client)).start()
+                client += 1
+            else:
+                sc.close()
 

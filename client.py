@@ -1,23 +1,21 @@
-#The client must:
-
-
-
-# convey that information to the server
-# show the latest scores provided by the server
-
-
+#------------Game Client--------------#
 from socket import socket,AF_INET, SOCK_STREAM
-from sys import argv
 import struct
-
+from queue import Queue
 HOST ='10.21.75.55'
 BUF_SIZE = 1024
 PORT = 12345
 
-#initially contact the server to get a player name. To allow for efficient transmission, the length of the player name must be
-# sent as a packed unsigned short before sending the player name. This also requires an update to the server code
 
 def receive(sc, size):
+    """
+    checks if data length is smaller than the size ,
+    get current data by subtracting received data size and length the of data,
+    returns whole data
+    :param sc: socket to get size
+    :param size: size
+    :return: data
+    """
     data = b''
     while len(data) < size:
         curr_data = sc.recv(size - len(data))
@@ -26,55 +24,65 @@ def receive(sc, size):
         data += curr_data
     return data
 
-
+#------------Client-------------#
 with socket(AF_INET, SOCK_STREAM) as sock:
-    sock.connect((HOST,PORT))# CONNECTION
-
-
-    nameLength = receive(sock,2)
-    Length = struct.unpack('!H',nameLength )[0]
-    name = receive(sock,Length).decode('utf-8')
-
-    print(name)
-    total = 0
+    sock.connect((HOST,PORT))                        #create connection
+    name_length = receive(sock,2)                    #get name length from socket using receive function
+    try:                                             #try-except to print error if number of client if more than 2
+        Length = struct.unpack('!H',name_length )[0] #unpack length as an unsigned char
+    except:
+        print("Connection refused")
+        exit()
+    player_name = receive(sock,Length).decode('utf-8')#receive name and decode it
+    board_size = 10
+    print(player_name)
     while True:
+        # get client's input for row and column
+            row = int(input('Enter a row: \n'))
+            #validate row range
+            if row < 0 or row >= board_size :
+                raise Exception("Row and Column are not in range")
+            else:
+                col = int(input("Enter a column: \n"))
+                #validate column range
+                if 0 <= col < board_size: 
+                    #bit shift row by 4 and add it to column
+                    row_col = (row << 4) | col 
+                    row_column_bit = struct.pack('!B', row_col)  # pack the row and column as an unsigned char
+                    sock.sendall(row_column_bit)                 # send it to socket
 
-        row = int(input('Enter a row: \n'))
-        col = int(input("Enter a column: \n"))
-        number = (row << 4) | col
-        rowColumnBit = struct.pack('!B',number)
-        sock.sendall(rowColumnBit)
-
-        if  name == "One":
-            T1 = receive(sock,2)
-            Score1 = struct.unpack('!H',T1)[0]
-            score = (Score1 & 0b11111110000000) >> 7
-            final_score = int(score)
-            print("Score for player 1: " ,score)
-
-        elif name == "Two":
-            T2 = receive(sock, 2)
-            Score2 = struct.unpack('!H', T2)[0]
-            score = (Score2 & 0b1111111)
-            print("Score for player 2: ", int(score))
-
-
-
-# keep the connection to the server open unless an error occurs
-
-
-
-
-# repeatedly prompt the user for a row and a column
-
-    # T = sock.recv(BUF_SIZE)
-    #
-    # ScoreFromServer = struct.unpack('!H',T)
-    # ScoreFinal = ScoreFromServer
+                    # validate player's name
+                    # receive score from socket and unpack it as unsigned short
+                    # then bitmask the score and bit shift the extracted score by 7 to get first player score
+                    # then bitmask the remaing digits to get second player's score
+                    binary_score = receive(sock, 2)
+                    score = struct.unpack('!H', binary_score)[0]
+                    score_one = (score & 0b11111110000000) >> 7
+                    score_two = (score & 0b1111111)
+                    
+                    #loop till total score is 30 and print both players score
+                    if(score_one + score_two != 30):
+                        if player_name == "One":
+                            print("Score for player 1:", int(score_one))
+                            print("Score for player 2:", int(score_two))
+                        elif player_name == "Two":
+                            print("Score for player 1:", int(score_one))
+                            print("Score for player 2:", int(score_two))
+                    else:
+                        #if one of the score is greater than the other player's score
+                        #then that player becomes winner and close the connection
+                        if(score_one > score_two):
+                                print("Winner : One" )
+                            
+                        else:
+                                print("Winner : Two")
+                        exit()
+                else:
+                    # exception - if row and column are not in range
+                    raise Exception("Row and Column are not in range")
 
 
-    # s = sock.recv(BUF_SIZE)
-    # score = struct.unpack('!H', s)
+
 
 
 
