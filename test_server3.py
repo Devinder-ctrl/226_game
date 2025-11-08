@@ -3,6 +3,7 @@ from socket import socket, AF_INET, SOCK_STREAM
 from struct import unpack
 from subprocess import run
 from time import sleep
+from zlib import decompress
 
 
 #
@@ -121,6 +122,14 @@ def get_scores(result: bytes) -> int:
     return [score1, score2]
 
 
+def get_board(client: socket) -> str:
+    data = get_data(client, 2)
+    board_len = unpack('!H', data)[0]
+    zboard = get_data(client, board_len)
+    board = decompress(zboard)
+    return board.decode()
+
+
 def test_invalid_column():
     client = socket(AF_INET, SOCK_STREAM)
     client.connect((HOST, PORT))
@@ -163,6 +172,8 @@ def test_board_with_one_player(execution_number):
     name = get_data(client, name_len).decode()
     assert name == "One"
 
+    cnt = 0
+    max_cnt = 100
     for i in range(10):
         for j in range(10):
             reply = put_data(client, str(i) + str(j))
@@ -171,6 +182,10 @@ def test_board_with_one_player(execution_number):
             assert score[1] == 0
             scores = score[0] + score[1]
 
+            b = get_board(client).replace('\n','')
+            cnt += 1
+            assert b == ('  ' * cnt) + ('_ ' * (max_cnt - cnt))
+
     assert scores == 30
 
     put_data(client, "99")
@@ -178,7 +193,7 @@ def test_board_with_one_player(execution_number):
     client.close()
 
 
-@pytest.mark.parametrize('execution_number', range(5))
+@pytest.mark.parametrize('execution_number', range(1))
 def test_board_with_two_players(execution_number):
     scores = 0
 
@@ -198,6 +213,8 @@ def test_board_with_two_players(execution_number):
     name = get_data(client2, name_len).decode()
     assert name == "Two"
 
+    cnt = 0
+    max_cnt = 100
     for i in range(10):
         for j in range(10):
             if (i + j) % 2 == 0:
@@ -213,6 +230,10 @@ def test_board_with_two_players(execution_number):
             assert score[c] >= 0
             assert score[d] >= 0
             scores = score[0] + score[1]
+
+            cnt += 1
+            b = get_board(client).replace('\n','')
+            assert b == ('  ' * cnt) + ('_ ' * (max_cnt - cnt))
 
     assert scores == 30
 

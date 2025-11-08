@@ -31,11 +31,16 @@ class board:
         Each row is joined into a string, and rows are separated by newlines.
         """
         board_string = ""
-        for i in self.board:
-            board_string += "_".join(str(j) for j in i) + "\n"
+        # for i in self.board:
+        #     board_string += '  ' +"_ ".join(str(j) for j in i) + "\n"
+        # return board_string
+        for i in range(len(self.board)):
+            for j in range(len(self.board)):
+                board_string += f'{self.board[i][j]}' + ' '
+            board_string += '\n'
         return board_string
 
-
+   
 #create a board
     def create_board(self):
         #check if board range is greater than 2, if its not throw value error else return board array
@@ -148,15 +153,19 @@ class board:
             else:
                 #if board is not _ then , score becomes equal to that position's treasure 
                 #then set it _ , to make it empty
-                if  self.board[row][column] != '_':
-                    score = self.board[row][column]
-                    self.board[row][column] = '_'
-                    return score
-                else:
+               
+                if  self.board[row][column] == '_' or self.board[row][column] == ' ':
+                    score = 0
+                    self.board[row][column] = ' '
                     return 0
+                elif  self.board[row][column] != '_':
+                    score = self.board[row][column]
+                    self.board[row][column] = ' '
+                    return score
 
         except ValueError as details:
             print(str(details))
             raise
+
 
 

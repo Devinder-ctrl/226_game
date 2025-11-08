@@ -4,21 +4,36 @@ class Player:
     Player class to add player's score and get player's score
     """
     def __init__(self, name):
-        #initialize name and score to 0
+        """
+        Player class to create a Player with given name.
+        Initial score set to 0
+
+        :param name: The name of the Player
+        """
         self.name = name
         self.score = 0
 
     def add_score(self,score):
-        #if score is none then return score else add that score to old scores and return it  
-        if(score == None):
+        """
+        Add new score to the Player's current score.
+
+        :param score: The new score to add. 
+        """
+        if score == None or score ==0:
             return f'{self.score}'
         else:
+            print(score)
             self.score += score
             return f'{self.score}'
 
     def get_score(self):
-        #get Player's score
+        """
+        :return: The Player's score.
+        """
         return self.score
     def __str__(self):
+        """
+        :return : A String representation of the Player.
+        """
         #string method to return players name and score
         return f'{self.name}: {self.score}'
