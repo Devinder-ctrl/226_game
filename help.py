@@ -1,0 +1,5 @@
+#Client ('127.0.0.1', 43220) received 78da53508857c08db81446a5b1490300fab73e81 ( b'x\xdaSP\x88W\xc0\x8d\xb8\x14F\xa5\xb1I\x03\x00\xfa\xb7>\x81' )
+
+import zlib
+
+print(zlib.decompress( b'x\xdaSP\x88W\xc0\x8d\xb8\x14F\xa5\xb1I\x03\x00\xfa\xb7>\x81'))

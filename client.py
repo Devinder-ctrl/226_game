@@ -1,8 +1,9 @@
 #------------Game Client--------------#
 from socket import socket,AF_INET, SOCK_STREAM
 import struct
+import zlib
 from queue import Queue
-HOST ='10.21.75.55'
+HOST =''
 BUF_SIZE = 1024
 PORT = 12345
 
@@ -35,52 +36,57 @@ with socket(AF_INET, SOCK_STREAM) as sock:
         exit()
     player_name = receive(sock,Length).decode('utf-8')#receive name and decode it
     board_size = 10
+    total_score = 30
     print(player_name)
     while True:
         # get client's input for row and column
             row = int(input('Enter a row: \n'))
             #validate row range
             if row < 0 or row >= board_size :
-                raise Exception("Row and Column are not in range")
-            else:
-                col = int(input("Enter a column: \n"))
+                print("Row not in range")
+                continue
+            
                 #validate column range
-                if 0 <= col < board_size: 
+            while True:
+                col = int(input("Enter a column: \n"))
+
+                if  col < 0 or col >= board_size:
+                    print("Column not in range")
+                    continue
                     #bit shift row by 4 and add it to column
+                
+                else:
                     row_col = (row << 4) | col 
                     row_column_bit = struct.pack('!B', row_col)  # pack the row and column as an unsigned char
                     sock.sendall(row_column_bit)                 # send it to socket
-
-                    # validate player's name
-                    # receive score from socket and unpack it as unsigned short
-                    # then bitmask the score and bit shift the extracted score by 7 to get first player score
-                    # then bitmask the remaing digits to get second player's score
                     binary_score = receive(sock, 2)
                     score = struct.unpack('!H', binary_score)[0]
                     score_one = (score & 0b11111110000000) >> 7
                     score_two = (score & 0b1111111)
-                    
-                    #loop till total score is 30 and print both players score
-                    if(score_one + score_two != 30):
-                        if player_name == "One":
-                            print("Score for player 1:", int(score_one))
-                            print("Score for player 2:", int(score_two))
-                        elif player_name == "Two":
-                            print("Score for player 1:", int(score_one))
-                            print("Score for player 2:", int(score_two))
-                    else:
-                        #if one of the score is greater than the other player's score
-                        #then that player becomes winner and close the connection
-                        if(score_one > score_two):
-                                print("Winner : One" )
-                            
-                        else:
-                                print("Winner : Two")
-                        exit()
-                else:
-                    # exception - if row and column are not in range
-                    raise Exception("Row and Column are not in range")
 
+                    board_bytes = receive(sock,2)   #recive binary
+                    board_length = struct.unpack('!H', board_bytes)[0]
+                    compressed_board = receive(sock,board_length) #recive binary length\
+                    
+                    #unpack board length to receive
+
+                    board_data = zlib.decompress(compressed_board).decode('utf-8')
+                    print("Score for player 1:", int(score_one))
+                    print("Score for player 2:", int(score_two))
+                    print(board_data)
+                    
+                break
+                # validate player's name
+                # receive score from socket and unpack it as unsigned short
+                # then bitmask the score and bit shift the extracted score by 7 to get first player score
+                # then bitmask the remaing digits to get second player's score
+
+               
+                    
+
+                #loop till total score is 30 and print both players score
+                
+          
 
 
 
