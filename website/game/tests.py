@@ -8,17 +8,19 @@ from django.db.models import Q
 
 class BoardGameTestCase(TestCase):
     def test_create_two_player(self):
-        player1 = Player.objects.create(name="One",score=0)
-        player2 = Player.objects.create(name="Two",score=0)
-
+        self.client.post('/game/create/')
+        player1 = Player.objects.get(name="One", score=0)
+        player2 = Player.objects.get(name="Two", score=0)
         self.assertEqual(player1.name, "One")
         self.assertEqual(player2.name,"Two")
         self.assertEqual(player1.score, 0)
         self.assertEqual(player2.score, 0)
 
     def test_create_hundred_board_tiles(self):
-        Tiles = create_board(10)
-        self.assertEqual(Tiles.count(),100)
+       
+        self.client.post('/game/create/')
+        tile = Tile.objects.all().count()
+        self.assertEqual(tile,100)
    
     def test_treasures_created(self):
         

@@ -6,7 +6,13 @@ from .models import Tile, Player
 from django.shortcuts import redirect
 from django.http import Http404
 
+
 def index(request):
+    """
+    Get all the Tile and Players objects and put them on the html file
+    which renders all of them
+    return: render the html file using request
+    """
     Tiles = Tile.objects.all()
     players = Player.objects.all()
     context = {
@@ -17,6 +23,12 @@ def index(request):
 
 
 def create_board( board_size):
+    """
+    First delete any old tile object
+    create a board using create_Tile method from Tile class and save it
+    return: Board created using all the tiles
+    """
+
     Tile.objects.all().delete()
 
     for i in range(board_size):
@@ -25,6 +37,11 @@ def create_board( board_size):
     return Tile.objects.all()
     
 def final(request):
+    """
+    First create a board of 10 using create_board function
+    Then put treasure on the board using treasure function
+    
+    """
     Tiles = create_board(10)
     treasures()
     players = final2()
