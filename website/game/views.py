@@ -1,0 +1,152 @@
+from django.shortcuts import render
+from django.http import HttpResponse
+import random
+from .Board import board
+from .models import Tile, Player
+from django.shortcuts import redirect
+from django.http import Http404
+
+def index(request):
+    Tiles = Tile.objects.all()
+    players = Player.objects.all()
+    context = {
+        'Tiles' : Tiles ,
+        'players' : players 
+    }
+    return render(request, 'template.html', context=context)
+
+
+def create_board( board_size):
+    Tile.objects.all().delete()
+
+    for i in range(board_size):
+        for j in range(board_size):
+            Tile.create_Tile(i,j,"_").save() 
+    return Tile.objects.all()
+    
+def final(request):
+    Tiles = create_board(10)
+    treasures()
+    players = final2()
+
+    context = {
+        'Tiles' : Tiles ,
+        'players' : players 
+    }
+    return render(request, 'template.html', context=context)
+
+def final2():
+    Player.objects.all().delete()
+
+    Player.create_player("One",0).save() 
+    Player.create_player("Two",0).save() 
+    
+    return Player.objects.all()
+
+   # return render(request, 'template.html', {'Player' : Player } )
+
+def move_up(treasure,row,col):
+    """
+    this is for going vertical where y does not change
+    and it move up after checking if there is _ or not
+    :param treasure: the treasure
+    :param x:the x-axis
+    :param y:the y-axis
+    :return:true or false if i should move or not
+    """
+    fixed = row
+    if fixed - treasure < 0:
+        return False
+    for i in range(treasure):
+        fixed -= 1
+        tile = Tile.objects.get(row=fixed, col=col)
+        if tile.value != '_':
+            tile.value = '_'
+            return False
+    fixed = row
+    for i in range(treasure):
+        fixed = fixed - 1
+        tile = Tile.objects.get(row=fixed, col=col)
+        tile.value = str(treasure)
+        tile.save()
+    return True
+
+def move_horizontal(treasure, row, col):
+    """
+    this is for going horizontal where x does not change
+    and it move after checking if there is _ or not
+    :param treasure: the treasure
+    :param x:the x-axis
+    :param y:the y-axis
+    :return:true or false if i should move or not
+    """
+    fixed = col
+    if fixed - treasure < 0:
+        return False
+    for i in range(treasure):
+        fixed = fixed - 1
+        tile = Tile.objects.get(row=row, col=fixed)
+
+        if tile.value != "_":
+            tile.value = '_'
+            return False
+    fixed = col
+    for i in range(treasure):
+        fixed = fixed - 1
+        tile = Tile.objects.get(row=row, col=fixed)
+        tile.value = str(treasure)
+        tile.save()
+        
+    return True
+
+def treasures():
+
+    """
+    generate random treasures from t to 1 on the board at positions horizontanl or vertical
+    then check at every step if t = number of treasures on board. Whenever, treasure is on board
+    make sure to check if its not coliding with other treasures
+    :param self: t , treasure
+    :return: treasures on board
+    """
+   
+    treasure = 4
+    board_size = 10
+
+    while treasure > 0:   
+
+        row = random.randint(0, board_size - 1)
+        col = random.randint(0, board_size - 1)
+
+        if random.randint(0, 1) == 0:
+            if move_up(treasure, row, col):
+                treasure -= 1
+             
+        else:
+            if move_horizontal(treasure, row, col):
+                treasure -= 1
+             
+
+def pick(request, name, row, col):
+    board_size = 10
+    if name != "One" and name != "Two":
+        return HttpResponse("No Such Player")
+
+    if row < 0 or row >= board_size or col < 0 or col >= board_size:
+        return HttpResponse("Invalid row or column")
+    else:
+        #if board is not _ then , score becomes equal to that position's treasure 
+        #then set it _ , to make it empty
+        tile = Tile.objects.get(row=row, col=col)
+        player = Player.objects.get(name=name)
+        value = str(tile.value)
+        
+     
+        if tile.value == '_': 
+            return HttpResponse("No treasure found")
+        else:
+            player.score += int(tile.value)
+            tile.value = '_'
+            player.save()
+            tile.save()
+            return redirect('/game/')
+

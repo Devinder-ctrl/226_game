@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+    {% if Tiles %}
+      <ul>
+      {% for tile in Tiles %}
+      {{ tile.value }} 
+
+      {% if forloop.counter|divisibleby:10 %}
+          <br>
+      {% endif %}
+
+      {% endfor %}
+      </ul>
+      {% else %}
+        <p>No Tiles.</p>
+      {% endif %}
+
+
+
+      {% if players %}
+      <ul>
+      {% for player in players %}
+      <li>{{ player.name }} :  {{player.score }}</li>
+      {% endfor %}
+      </ul>
+      {% else %}
+      <p>No players.</p>
+      {% endif %}
+</body>
+</html>
