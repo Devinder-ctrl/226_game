@@ -1,17 +1,16 @@
-from django.shortcuts import render
-from django.http import HttpResponse
+from django.shortcuts import render, redirect
+from django.http import HttpResponse, Http404
 import random
 from .Board import board
 from .models import Tile, Player
-from django.shortcuts import redirect
-from django.http import Http404
 
 
 def index(request):
     """
+    Main page
     Get all the Tile and Players objects and put them on the html file
     which renders all of them
-    return: render the html file using request
+    
     """
     Tiles = Tile.objects.all()
     players = Player.objects.all()
@@ -24,8 +23,9 @@ def index(request):
 
 def create_board( board_size):
     """
-    First delete any old tile object
-    create a board using create_Tile method from Tile class and save it
+    create new board using given board size
+    First delete any old tile object,
+    create tiles using create_Tile method from Tile class and save it
     return: Board created using all the tiles
     """
 
@@ -38,13 +38,15 @@ def create_board( board_size):
     
 def final(request):
     """
-    First create a board of 10 using create_board function
-    Then put treasure on the board using treasure function
-    
+    First create a board of 10,
+    Then place treasures on the board using 
+    create two players
+    render the board and players in the template
+
     """
     Tiles = create_board(10)
     treasures()
-    players = final2()
+    players = create_all_players()
 
     context = {
         'Tiles' : Tiles ,
@@ -52,7 +54,14 @@ def final(request):
     }
     return render(request, 'template.html', context=context)
 
-def final2():
+def create_all_players():
+    """
+    Create players
+    first delete all the existing player objects
+    Then create two players "One" and "Two" with score 0 
+    Then save all players
+    return: all player objects
+    """
     Player.objects.all().delete()
 
     Player.create_player("One",0).save() 
@@ -60,7 +69,6 @@ def final2():
     
     return Player.objects.all()
 
-   # return render(request, 'template.html', {'Player' : Player } )
 
 def move_up(treasure,row,col):
     """
@@ -122,8 +130,7 @@ def treasures():
     generate random treasures from t to 1 on the board at positions horizontanl or vertical
     then check at every step if t = number of treasures on board. Whenever, treasure is on board
     make sure to check if its not coliding with other treasures
-    :param self: t , treasure
-    :return: treasures on board
+  
     """
    
     treasure = 4
@@ -144,6 +151,13 @@ def treasures():
              
 
 def pick(request, name, row, col):
+    """
+    Pick's a treasure from the board
+    Check Player's name, row and column
+    If tile contain a treasure, put it in that player's score
+    set that tile to '_'
+    redirect to game page 
+    """
     board_size = 10
     if name != "One" and name != "Two":
         return HttpResponse("No Such Player")
