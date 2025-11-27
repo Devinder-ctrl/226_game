@@ -13,7 +13,8 @@ class Tile(models.Model):
         model = cls(row=row, col=col, value=value)
         model.full_clean()
         return model
-        
+    class Meta:
+        ordering = ('row','col')
 # Create your models here.
 class Player(models.Model):
     name = models.CharField(max_length=10)

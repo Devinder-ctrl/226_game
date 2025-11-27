@@ -40,7 +40,7 @@ def create_board( board_size):
     for i in range(board_size):
         for j in range(board_size):
             Tile.create_Tile(i,j,"_").save() 
-    return Tile.objects.all().order_by('i').values()
+    return Tile.objects.all().order_by('row','col')
     
 def final(request):
     """
