@@ -13,8 +13,14 @@ def index(request):
     which renders all of them
     return: render the html file using request
     """
-    Tiles = Tile.objects.all()
-    players = Player.objects.all()
+    Tiles = []
+    for i in range(0,10):
+        for j in range(0,10):
+            Tiles.append(Tile.objects.get(row=i, col=j))
+ 
+    players = []
+    players.append(player.object.get(name= "One"))
+    players.append(player.object.get(name= "Two"))
     context = {
         'Tiles' : Tiles ,
         'players' : players 
