@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+    <style>
+          button {
+      background-color: rgb(122, 90, 90);
+      width: 95%;
+      border-radius: 5px; 
+      padding: 8px;
+      margin: 10px;
+      border: none;
+      cursor: pointer;
+     align-items: center;
+    }
+    
+    </style>
+<body>
+  
+  <h1 style="color: rgb(8, 58, 41); padding: 0; text-align: center;">Please select a Player</h1>
+  <!-- {% if players %}
+      <ul>
+      {% for player in players %}
+        {% if player.name == "Two"%} -->
+        
+        
+        <button style="background-color: rgb(122, 90, 90);  "><a style="font-family: 'Courier New', Courier, monospace; color: aliceblue; font-weight:bold ;" href="/game/Two/Two" > {{player.name}}</a></button>
+          <!-- {% endif %}
+        {% if player.name == "One"%} -->
+        <button style="background-color: rgb(122, 90, 90);  "><a style="font-family: 'Courier New', Courier, monospace; color: aliceblue; font-weight:bold ;" href="/game/One/One" > {{player.name}}</a></button>
+<!--        
+         {% endif %}
+          {% endfor %} -->
+      </ul>
+      
+      {% endif %}
+
+    
+
+    
+</body>
+</html>

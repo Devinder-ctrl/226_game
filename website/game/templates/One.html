@@ -33,17 +33,21 @@ li{
 
   {% if players %}
       
-      {% for player in players %}
-      
-  {% if player.name == "One"%}
-     <li >{{ player.name }} :  {{player.score }}</li>
-     {% elif player.name == "Two"%}
-      <li >{{ player.name }} :  {{player.score }}</li>
+ 
+    {% for player in players %}
+         {% if player.name == 'One' %}
+            <li style="color: rgb(188, 57, 79);">{{ player.name }} : {{ player.score }}</li>
+            {%else%}
+            <li>{{ player.name }} : {{ player.score }}</li>
+         {% endif%}
+
+    {% endfor %}
+    
+   
     {% if Tiles %}
       
       {% for tile in Tiles %}
-            
-            <button><a href="{% url 'pick' player.name tile.row tile.col %} ">{{ tile.unicode_value }}</a> </button> 
+            <button ><a href="{% url 'pick' 'One' tile.row tile.col %} ">{{ tile.unicode_value }}</a> </button> 
            
         
       {% if forloop.counter|divisibleby:10 %}
@@ -59,10 +63,8 @@ li{
 
 
 
-     {% endfor %}
-      </ul>
-      {% else %}
-      <p>No players.</p>
-      {% endif %}
+  
+     
+
 </body>
 </html>

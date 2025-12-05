@@ -6,6 +6,15 @@ from .models import Tile, Player
 from django.shortcuts import redirect
 from django.http import Http404
 
+def home(request):
+    players = Player.objects.all()
+    context = {
+        
+        'players' : players 
+    }
+
+    return render(request, 'home.html', context=context)
+
 
 def index(request):
     """
@@ -13,21 +22,37 @@ def index(request):
     which renders all of them
     return: render the html file using request
     """
-    # Tiles = []
-    # for i in range(0,10):
-    #     for j in range(0,10):
-    #         Tiles.append(Tile.objects.get(row=i, col=j))
- 
-    # players = []
-    # players.append(players.object.get(name= "One"))
-    # players.append(players.object.get(name= "Two"))
+   
     Tiles = Tile.objects.all()
     players = Player.objects.all()
+
     context = {
         'Tiles' : Tiles ,
         'players' : players 
     }
+  
     return render(request, 'template.html', context=context)
+
+
+def check_player(request,name):
+    """
+    Get all the Tile and Players objects and put them on the html file
+    which renders all of them
+    return: render the html file using request
+    """
+    
+    Tiles = Tile.objects.all()
+    players = Player.objects.all()
+
+    context = {
+        'Tiles' : Tiles ,
+        'players' : players 
+    }
+    if name == "One":
+        return render(request, 'One.html', context=context)
+    else:
+        return render(request, 'Two.html', context=context)
+
 
 
 def create_board( board_size):
@@ -41,7 +66,7 @@ def create_board( board_size):
 
     for i in range(board_size):
         for j in range(board_size):
-            Tile.create_Tile(i,j,"_").save() 
+            Tile.create_Tile(i,j,'_','\u2610').save() 
     return Tile.objects.all().order_by('row','col')
     
 def final(request):
@@ -53,13 +78,13 @@ def final(request):
     Tiles = create_board(10)
     treasures()
     players = final2()
-
     context = {
         'Tiles' : Tiles ,
         'players' : players 
     }
     return render(request, 'template.html', context=context)
 
+#create players
 def final2():
     Player.objects.all().delete()
 
@@ -68,8 +93,7 @@ def final2():
     
     return Player.objects.all()
 
-   # return render(request, 'template.html', {'Player' : Player } )
-
+   
 def move_up(treasure,row,col):
     """
     this is for going vertical where y does not change
@@ -153,9 +177,13 @@ def treasures():
 
 def pick(request, name, row, col):
     board_size = 10
+    all_tiles = '\u2610'
+    blank_tiles = '\u2423'
+    treasure_tiles = '\U0001F4B8'
     if name != "One" and name != "Two":
         return HttpResponse("No Such Player")
-
+  
+        
     if row < 0 or row >= board_size or col < 0 or col >= board_size:
         return HttpResponse("Invalid row or column")
     else:
@@ -164,14 +192,28 @@ def pick(request, name, row, col):
         tile = Tile.objects.get(row=row, col=col)
         player = Player.objects.get(name=name)
         value = str(tile.value)
-        
-     
-        if tile.value == '_': 
-            return HttpResponse("No treasure found")
+       
+        if tile.value == '_':
+            if tile.unicode_value == treasure_tiles: 
+                tile.unicode_value = treasure_tiles
+                tile.save()
+            else:
+                tile.unicode_value = blank_tiles
+                tile.save()
+            if name == "One":
+                return redirect('/game/One/One')
+            else:
+                return redirect('/game/Two/Two') 
         else:
             player.score += int(tile.value)
-            tile.value = '_'
             player.save()
             tile.save()
-            return redirect('/game/')
-
+            
+            tile.unicode_value = treasure_tiles
+            tile.value = '_'
+            tile.save()
+            if name == "One":
+                return redirect('/game/One/One')
+            else:
+                return redirect('/game/Two/Two') 
+            
